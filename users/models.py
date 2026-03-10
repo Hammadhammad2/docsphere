@@ -5,10 +5,13 @@ from users.managers import UserManager
 
 
 class User(AbstractUser):
-    username = models.CharField(max_length=255, blank=True, null=True, unique=False)
+    username = None
     email = models.EmailField(unique=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     objects = UserManager()
+
+    def __str__(self):
+        return self.email
