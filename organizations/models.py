@@ -1,4 +1,3 @@
-from django.conf import settings
 from django.db import models
 from django.db.models.fields import uuid
 
@@ -17,7 +16,7 @@ class InviteStatus(models.TextChoices):
 class Organization(models.Model):
     name = models.CharField(max_length=255, unique=True)
     description = models.TextField(blank=True, default="")
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="organizations")
+    created_by = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name="organizations")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -26,7 +25,7 @@ class Organization(models.Model):
 
 
 class Membership(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="memberships")
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name="memberships")
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="memberships")
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.MEMBER)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -45,7 +44,7 @@ class Membership(models.Model):
 class Invite(models.Model):
     email = models.EmailField()
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="invites")
-    invited_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="invites")
+    invited_by = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name="invites")
     status = models.CharField(max_length=255, choices=InviteStatus.choices, default=InviteStatus.PENDING)
     token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
