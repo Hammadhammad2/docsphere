@@ -2,9 +2,11 @@ from django.urls import path
 
 from organizations import views
 
+app_name = "organizations"
+
 urlpatterns = [
-    path("", views.OrganizationListView.as_view(), name="list_organizations"),
-    path("<int:id>/", views.OrganizationDetailView.as_view(), name="detail_organization"),
-    path("create/", views.OrganizationCreateView.as_view(), name="create_organization"),
-    path("update/<int:id>/", views.OrganizationUpdateView.as_view(), name="update_organization"),
+    path("", views.organization_list, name="list_organizations"),
+    path("<uuid:id>/", views.organization_detail, name="detail_organization"),
+    path("create/", views.organization_create, name="create_organization"),
+    path("update/<uuid:id>/", views.organization_update, name="update_organization"),
 ]
