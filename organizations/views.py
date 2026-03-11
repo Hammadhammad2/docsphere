@@ -1,33 +1,82 @@
-from django.http import HttpResponse
+import json
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 
-from organizations.models import Organization
+from config.views import ApiView
 
-
-def organization_list(request):
-    organizations = Organization.objects.values("id", "name", "description", "created_at")
-    print(list(organizations))
-    return HttpResponse(list(organizations))
+from .models import Organization
 
 
-def organization_create(request):
-    if request.method == "POST":
-        organization = Organization.objects.create(
-            name=request.POST.get("name"),
-            description=request.POST.get("description"),
-            created_by=request.user
-        )
-        return HttpResponse(f"Organization {organization.id} created successfully")
-    return HttpResponse("Organization creation failed")
+class OrganizationListView(ApiView):
+    def get(self, request):
+        organizations = Organization.objects.all()
+        return JsonResponse(list(organizations))
 
 
-def organization_detail(request, id):
-    organization = Organization.objects.get(id=id)
-    return HttpResponse(organization)
+class OrganizationCreateView(ApiView):
+    def post(self, request, *args, **kwargs):
+        try:
+            data = json.loads(request.body)
+
+            name = data.get("name")
+            description = data.get("description", "")
+
+            if not name:
+                return JsonResponse(
+                    {"error": "Name is required"},
+                    status=400
+                )
+
+            organization = Organization.objects.create(
+                name=name,
+                description=description,
+                created_by=request.user
+            )
+
+            return JsonResponse(
+                {
+                    "message": "Organization created successfully",
+                    "id": organization.id,
+                    "name": organization.name,
+                    "description": organization.description,
+                },
+                status=201
+            )
+
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON body"}, status=400)
 
 
-def organization_update(request, id):
-    organization = Organization.objects.get(id=id)
-    organization.name = request.POST.get("name")
-    organization.description = request.POST.get("description")
-    organization.save()
-    return HttpResponse(organization)
+class OrganizationDetailView(ApiView):
+    def get(self, request, id):
+        organization = get_object_or_404(Organization, id=id)
+        print(organization)
+        return JsonResponse({
+            "message": "Organization retrieved successfully",
+            "id": organization.id,
+            "name": organization.name,
+            "description": organization.description,
+        })
+
+
+class OrganizationUpdateView(ApiView):
+    def put(self, request, id):
+        try:
+            organization = Organization.objects.get(id=id)
+
+            data = json.loads(request.body)
+
+            organization.name = data.get("name")
+            organization.description = data.get("description")
+
+            organization.save()
+
+            return JsonResponse({
+                "message": "Organization updated successfully",
+                "id": organization.id,
+                "name": organization.name,
+                "description": organization.description,
+            })
+
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON body"}, status=400)
