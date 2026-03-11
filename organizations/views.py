@@ -15,6 +15,12 @@ class OrganizationListView(ApiView):
 
 class OrganizationCreateView(ApiView):
     def post(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return JsonResponse(
+                {"error": "Only super admins can create organizations"},
+                status=403,
+            )
+
         try:
             data = json.loads(request.body)
 
@@ -24,13 +30,12 @@ class OrganizationCreateView(ApiView):
             if not name:
                 return JsonResponse(
                     {"error": "Name is required"},
-                    status=400
+                    status=400,
                 )
 
             organization = Organization.objects.create(
                 name=name,
                 description=description,
-                created_by=request.user
             )
 
             return JsonResponse(
@@ -40,7 +45,7 @@ class OrganizationCreateView(ApiView):
                     "name": organization.name,
                     "description": organization.description,
                 },
-                status=201
+                status=201,
             )
 
         except json.JSONDecodeError:
