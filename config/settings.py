@@ -31,15 +31,19 @@ AUTH_USER_MODEL = "users.User"
 
 # Application definition
 
+CUSTOM_APPS = [
+    "users",
+    "organizations",
+]
+
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'users.apps.UsersConfig',
-    'organizations',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    *CUSTOM_APPS,
 ]
 
 MIDDLEWARE = [
