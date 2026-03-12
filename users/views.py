@@ -1,18 +1,43 @@
+import json
+from http import HTTPStatus
+
+from django.contrib.auth import authenticate, login, logout
 from django.http import JsonResponse
-from django.views import View
+
+from config.views import ApiView
+from users.models import User
 
 
-class LoginView(View):
-    def get(self, request):
-        return JsonResponse({"message": "Hello, World!"})
-
+class LoginView(ApiView):
     def post(self, request):
-        return JsonResponse({"message": "Hello, World!"})
+        data = json.loads(request.body)
+
+        email = data.get('email')
+        password = data.get('password')
+
+        user = authenticate(request, email=email, password=password)
+
+        if user is not None:
+            login(request, user)
+            return JsonResponse({'message': 'Login successful'})
+        else:
+            return JsonResponse({'error': 'Invalid email or password'}, status=HTTPStatus.UNAUTHORIZED)
 
 
-class RegisterView(View):
-    def get(self, request):
-        return JsonResponse({"message": "Hello, World!"})
-
+class LogoutView(ApiView):
     def post(self, request):
-        return JsonResponse({"message": "Hello, World!"})
+        logout(request)
+        return JsonResponse({'message': 'Logout successful'})
+
+
+class RegisterView(ApiView):
+    def post(self, request):
+        data = json.loads(request.body)
+
+        email = data.get('email')
+        password = data.get('password')
+
+        user = User.objects.create_user(email=email, password=password)
+
+        login(request, user)
+        return JsonResponse({'message': 'User created successfully'})
