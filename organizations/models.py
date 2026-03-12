@@ -1,43 +1,45 @@
-from django.db import models
-from django.db.models.fields import uuid
-from django.utils import timezone
+import uuid
 
-from config.models import TimestampModel
+from django.db import models
+from django.utils import timezone
+from django_extensions.db.models import TimeStampedModel
 
 from .choices import InviteStatus, Role
 
 INVITE_EXPIRY_DAYS = 7
 
 
-class Organization(TimestampModel):
-    description = models.TextField(blank=True, default="")
+class Organization(TimeStampedModel):
+    description = models.TextField(blank=True, default='')
     name = models.CharField(max_length=255, unique=True)
+
+    members = models.ManyToManyField('users.User', through='organizations.Membership', related_name='organizations')
 
     def __str__(self):
         return self.name
 
 
-class Membership(TimestampModel):
+class Membership(TimeStampedModel):
     role = models.CharField(max_length=20, choices=Role.choices, default=Role.MEMBER)
 
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="memberships")
-    user = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="memberships")
+    organization = models.ForeignKey('organizations.Organization', on_delete=models.CASCADE, related_name='memberships')
+    user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='memberships')
 
     class Meta:
-        constraints = [models.UniqueConstraint(fields=["user", "organization"], name="unique_user_organization")]
+        constraints = [models.UniqueConstraint(fields=['user', 'organization'], name='unique_user_organization')]
 
     def __str__(self):
-        return f"{self.user} - {self.organization} ({self.role})"
+        return f'{self.user} - {self.organization} ({self.role})'
 
 
-class Invite(TimestampModel):
+class Invite(TimeStampedModel):
     email = models.EmailField()
     expires_at = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=20, choices=InviteStatus.choices, default=InviteStatus.PENDING)
     token = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
 
-    invited_by = models.ForeignKey("users.User", on_delete=models.CASCADE, related_name="invites")
-    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, related_name="invites")
+    invited_by = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='invites')
+    organization = models.ForeignKey('organizations.Organization', on_delete=models.CASCADE, related_name='invites')
 
     def __str__(self):
-        return f"{self.email} - {self.organization} ({self.status})"
+        return f'{self.email} - {self.organization} ({self.status})'

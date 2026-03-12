@@ -2,12 +2,12 @@ from django.db import models
 
 
 class Role(models.TextChoices):
-    OWNER = "owner", "Owner"
-    ADMIN = "admin", "Admin"
-    MEMBER = "member", "Member"
+    OWNER = 'OWNER', 'Owner'
+    ADMIN = 'ADMIN', 'Admin'
+    MEMBER = 'MEMBER', 'Member'
 
 
 class InviteStatus(models.TextChoices):
-    PENDING = "pending", "Pending"
-    ACCEPTED = "accepted", "Accepted"
-    EXPIRED = "expired", "Expired"
+    PENDING = 'PENDING', 'Pending'
+    ACCEPTED = 'ACCEPTED', 'Accepted'
+    EXPIRED = 'EXPIRED', 'Expired'
