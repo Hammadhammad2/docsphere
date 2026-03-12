@@ -6,5 +6,5 @@ target-version = "py311"
 select = ["E", "W", "F", "I", "N", "UP", "B", "A", "C4", "SIM", "TCH", "DJ"]
 
 [tool.ruff.format]
-quote-style = "single"
+quote-style = "double"
 indent-style = "space"
