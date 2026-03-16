@@ -1,43 +1,40 @@
 import json
-from http import HTTPStatus
 
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from django.http import JsonResponse
+from django.shortcuts import redirect
+from django.urls import reverse_lazy
+from django.views import View
+from django.views.generic import FormView
 
-from config.views import ApiView
+from users.forms.login_form import LoginForm
 from users.models import User
 
 
-class LoginView(ApiView):
-    def post(self, request):
-        data = json.loads(request.body)
+class LoginView(FormView):
+    template_name = "users/login.html"
+    form_class = LoginForm
+    success_url = reverse_lazy("organizations:list_organizations")
 
-        email = data.get('email')
-        password = data.get('password')
-
-        user = authenticate(request, email=email, password=password)
-
-        if user is not None:
-            login(request, user)
-            return JsonResponse({'message': 'Login successful'})
-        else:
-            return JsonResponse({'error': 'Invalid email or password'}, status=HTTPStatus.UNAUTHORIZED)
+    def form_valid(self, form):
+        login(self.request, form.user)
+        return super().form_valid(form)
 
 
-class LogoutView(ApiView):
+class LogoutView(View):
     def post(self, request):
         logout(request)
-        return JsonResponse({'message': 'Logout successful'})
+        return redirect("login")
 
 
-class RegisterView(ApiView):
+class RegisterView(View):
     def post(self, request):
         data = json.loads(request.body)
 
-        email = data.get('email')
-        password = data.get('password')
+        email = data.get("email")
+        password = data.get("password")
 
         user = User.objects.create_user(email=email, password=password)
 
         login(request, user)
-        return JsonResponse({'message': 'User created successfully'})
+        return JsonResponse({"message": "User created successfully"})

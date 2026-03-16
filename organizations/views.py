@@ -10,12 +10,12 @@ from organizations.models import Organization
 
 class OrganizationListView(View):
     def get(self, request):
-        organizations = Organization.objects.all()
-        return JsonResponse(list(organizations))
+        organizations = Organization.objects.values("id", "name", "description")
+        return JsonResponse(list(organizations), safe=False)
 
 
 class OrganizationCreateView(View):
-    def post(self, request, *args, **kwargs):
+    def post(self, request):
         if not request.user.is_superuser:
             return JsonResponse(
                 {"error": "Only super admins can create organizations"},
