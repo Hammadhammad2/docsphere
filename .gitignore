@@ -19,9 +19,9 @@ db.sqlite3-journal
 media/
 staticfiles/
 
-# Environment variables
+# Environment variables (do not commit .env; commit .env.example as a template)
 .env
-.env.*
+.env.local
 
 # IDE
 .vscode/

@@ -2,8 +2,6 @@ from django.contrib import admin
 
 from organizations.models import Organization
 
-# Register your models here.
-
 
 @admin.register(Organization)
 class OrganizationAdmin(admin.ModelAdmin):
