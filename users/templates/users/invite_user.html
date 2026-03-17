@@ -1,0 +1,16 @@
+{% extends "users/base.html" %}
+
+{% block title %}Invite user – Docsphere{% endblock %}
+
+{% block content %}
+    <h1>Invite user</h1>
+    {% if has_organizations %}
+        <form method="post" action="{% url 'invite_user' %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Invite</button>
+        </form>
+    {% else %}
+        <p>You must be a member of an organization to send invites.</p>
+    {% endif %}
+{% endblock %}
