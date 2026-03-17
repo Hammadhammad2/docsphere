@@ -1,0 +1,9 @@
+{% extends "users/base.html" %}
+
+{% block title %}{{ organization.name }} – Docsphere{% endblock %}
+
+{% block content %}
+<h1>{{ organization.name }}</h1>
+<p>{{ organization.description }}</p>
+<p><a href="{% url 'organizations:list_organizations' %}">Back to organizations</a></p>
+{% endblock %}

@@ -1,98 +1,61 @@
-import json
-from http import HTTPStatus
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.views import View
-
-from organizations.models import Organization
-
-
-class OrganizationListView(View):
-    def get(self, request):
-        organizations = Organization.objects.values("id", "name", "description")
-        return JsonResponse(list(organizations), safe=False)
+from organizations.choices import Role
+from organizations.forms.create_organization_form import CreateOrganizationForm
+from organizations.forms.update_organization_form import UpdateOrganizationForm
+from organizations.models import Organization, UserOrganization
 
 
-class OrganizationCreateView(View):
-    def post(self, request):
-        if not request.user.is_superuser:
-            return JsonResponse(
-                {"error": "Only super admins can create organizations"},
-                status=HTTPStatus.FORBIDDEN,
-            )
+class OrganizationListView(LoginRequiredMixin, ListView):
+    model = Organization
+    context_object_name = "organizations"
+    template_name = "organizations/organization_list.html"
+    login_url = reverse_lazy("login")
 
-        try:
-            data = json.loads(request.body)
-
-            name = data.get("name")
-            description = data.get("description", "")
-
-            if not name:
-                return JsonResponse(
-                    {"error": "Name is required"},
-                    status=HTTPStatus.BAD_REQUEST,
-                )
-
-            organization = Organization.objects.create(
-                name=name,
-                description=description,
-            )
-
-            return JsonResponse(
-                {
-                    "message": "Organization created successfully",
-                    "id": organization.id,
-                    "name": organization.name,
-                    "description": organization.description,
-                },
-                status=HTTPStatus.CREATED,
-            )
-
-        except json.JSONDecodeError:
-            return JsonResponse(
-                {"error": "Invalid JSON body"},
-                status=HTTPStatus.BAD_REQUEST,
-            )
+    def get_queryset(self):
+        return Organization.objects.filter(members=self.request.user)
 
 
-class OrganizationDetailView(View):
-    def get(self, request, organization_id):
-        organization = get_object_or_404(Organization, pk=organization_id)
+class OrganizationCreateView(LoginRequiredMixin, CreateView):
+    model = Organization
+    form_class = CreateOrganizationForm
+    template_name = "organizations/organization_create.html"
+    success_url = reverse_lazy("organizations:list_organizations")
+    login_url = reverse_lazy("login")
 
-        return JsonResponse(
-            {
-                "message": "Organization retrieved successfully",
-                "id": organization.id,
-                "name": organization.name,
-                "description": organization.description,
-            }
+    def form_valid(self, form):
+        organization = form.save()
+        UserOrganization.objects.create(
+            organization=organization,
+            user=self.request.user,
+            role=Role.OWNER,
         )
+        return super().form_valid(form)
 
 
-class OrganizationUpdateView(View):
-    def put(self, request, organization_id):
-        try:
-            organization = Organization.objects.get(pk=organization_id)
+class OrganizationUpdateView(LoginRequiredMixin, UpdateView):
+    model = Organization
+    form_class = UpdateOrganizationForm
+    context_object_name = "organization"
+    template_name = "organizations/organization_update.html"
+    success_url = reverse_lazy("organizations:list_organizations")
+    login_url = reverse_lazy("login")
 
-            data = json.loads(request.body)
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            queryset = Organization.objects.all()
+        else:
+            queryset = Organization.objects.filter(members=self.request.user)
+        return queryset
 
-            organization.name = data.get("name")
-            organization.description = data.get("description")
 
-            organization.save()
+class OrganizationDetailView(LoginRequiredMixin, DetailView):
+    model = Organization
+    context_object_name = "organization"
+    template_name = "organizations/organization_detail.html"
+    login_url = reverse_lazy("login")
 
-            return JsonResponse(
-                {
-                    "message": "Organization updated successfully",
-                    "id": organization.id,
-                    "name": organization.name,
-                    "description": organization.description,
-                }
-            )
-
-        except json.JSONDecodeError:
-            return JsonResponse(
-                {"error": "Invalid JSON body"},
-                status=HTTPStatus.BAD_REQUEST,
-            )
+    def get_queryset(self):
+        return Organization.objects.filter(members=self.request.user)

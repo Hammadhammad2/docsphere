@@ -1,0 +1,15 @@
+{% extends "users/base.html" %} {% block title %}Organizations – Docsphere{% endblock %}
+{% block content %}
+<h1>My organizations</h1>
+<p><a href="{% url 'organizations:create_organization' %}">Create organization</a></p>
+{% if organizations %}
+<ul>
+	{% for org in organizations %}
+	<li>
+		<strong>{{ org.name }}</strong> – {{ org.description|default:"No description" }}
+	</li>
+	{% endfor %}
+</ul>
+{% else %}
+<p>You are not a member of any organization yet.</p>
+{% endif %} {% endblock %}

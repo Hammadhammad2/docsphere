@@ -1,0 +1,13 @@
+{% extends "users/base.html" %}
+
+{% block title %}Create organization – Docsphere{% endblock %}
+
+{% block content %}
+<h1>Create organization</h1>
+<form method="post" action="{% url 'organizations:create_organization' %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Create</button>
+</form>
+<p><a href="{% url 'organizations:list_organizations' %}">Back to organizations</a></p>
+{% endblock %}
