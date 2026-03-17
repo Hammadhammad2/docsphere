@@ -29,6 +29,7 @@ class LogoutView(View):
         return redirect("login")
 
 
+# TODO: This view will not be used later as we will use the invite system to register users.
 class RegisterView(FormView):
     template_name = "users/register.html"
     form_class = RegisterForm
