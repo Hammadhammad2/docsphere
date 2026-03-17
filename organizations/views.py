@@ -1,4 +1,6 @@
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
@@ -13,9 +15,16 @@ class OrganizationListView(LoginRequiredMixin, ListView):
     context_object_name = "organizations"
     template_name = "organizations/organization_list.html"
     login_url = reverse_lazy("login")
+    paginate_by = settings.PAGINATE_BY
 
     def get_queryset(self):
-        return Organization.objects.filter(members=self.request.user)
+        queryset = Organization.objects.filter(members=self.request.user)
+        search_query = self.request.GET.get("q", "").strip()
+
+        if search_query:
+            queryset = queryset.filter(Q(name__icontains=search_query) | Q(description__icontains=search_query))
+
+        return queryset.order_by("created")
 
 
 class OrganizationCreateView(LoginRequiredMixin, CreateView):
