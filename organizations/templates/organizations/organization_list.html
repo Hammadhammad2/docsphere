@@ -15,7 +15,8 @@
 <ul>
 	{% for org in organizations %}
 	<li>
-		<strong>{{ org.name }}</strong> – {{ org.description|default:"No description" }}
+		<strong><a href="{% url 'organizations:organization_detail' org.pk %}">{{ org.name }}</a></strong> – {{ org.description|default:"No description" }}
+		<a href="{% url 'organizations:update_organization' org.pk %}">Update</a>
 	</li>
 	{% endfor %}
 </ul>
@@ -32,6 +33,10 @@
 </nav>
 {% endif %}
 {% else %}
-<p>You are not a member of any organization yet.</p>
+	{% if request.GET.q %}
+	<p>No organizations match your search.</p>
+	{% else %}
+	<p>You are not a member of any organization yet.</p>
+	{% endif %}
 {% endif %}
 {% endblock %}

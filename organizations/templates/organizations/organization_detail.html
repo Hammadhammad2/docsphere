@@ -5,5 +5,8 @@
 {% block content %}
 <h1>{{ organization.name }}</h1>
 <p>{{ organization.description }}</p>
-<p><a href="{% url 'organizations:list_organizations' %}">Back to organizations</a></p>
+<p>
+	<a href="{% url 'organizations:update_organization' organization.pk %}">Update organization</a>
+	| <a href="{% url 'organizations:list_organizations' %}">Back to organizations</a>
+</p>
 {% endblock %}
