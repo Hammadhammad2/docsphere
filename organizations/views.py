@@ -1,14 +1,16 @@
 from datetime import timedelta
+from uuid import UUID
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
-from django.shortcuts import get_object_or_404, redirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.views.generic import CreateView, DetailView, FormView, ListView, TemplateView, UpdateView
+from django.views import View
+from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView
 
 from organizations.choices import InviteStatus, Role
 from organizations.forms import CreateOrganizationForm, CreateOrganizationInviteForm, UpdateOrganizationForm
@@ -140,12 +142,48 @@ class OrganizationInviteCreateView(LoginRequiredMixin, FormView):
         return redirect("organizations:organization_detail", pk=self.organization.pk)
 
 
-class OrganizationInviteAcceptLandingView(TemplateView):
-    template_name = "organizations/invite_accept_landing.html"
+class OrganizationInviteAcceptLandingView(View):
+    def get(self, request, *args, **kwargs):
+        raw = (kwargs.get("token") or "").replace("%3D", "").replace("=", "")
+        try:
+            token = UUID(raw)
+        except ValueError:
+            return render(request, "organizations/invite_accept_landing.html", {"error": "invalid"}, status=404)
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        invite = get_object_or_404(OrganizationInvite, token=self.kwargs["token"])
-        context["invite"] = invite
-        context["organization"] = invite.organization
-        return context
+        invite = OrganizationInvite.objects.filter(token=token).first()
+        if invite is None:
+            return render(request, "organizations/invite_accept_landing.html", {"error": "invalid"}, status=404)
+
+        if invite.status != InviteStatus.PENDING or invite.expires_at <= timezone.now():
+            return render(
+                request,
+                "organizations/invite_accept_landing.html",
+                {"invite": invite, "organization": invite.organization, "error": "used_or_expired"},
+            )
+
+        if request.user.is_authenticated:
+            if request.user.email.lower() != invite.email.lower():
+                return render(
+                    request,
+                    "organizations/invite_accept_landing.html",
+                    {"invite": invite, "organization": invite.organization, "wrong_user": True},
+                )
+            UserOrganization.objects.get_or_create(
+                organization=invite.organization,
+                user=request.user,
+                defaults={"role": Role.MEMBER},
+            )
+            invite.status = InviteStatus.ACCEPTED
+            invite.save(update_fields=["status", "modified"])
+            messages.success(request, f"You joined {invite.organization.name}.")
+            return redirect("organizations:organization_detail", pk=invite.organization_id)
+
+        return render(
+            request,
+            "organizations/invite_accept_landing.html",
+            {
+                "invite": invite,
+                "organization": invite.organization,
+                "choose_account": True,
+            },
+        )

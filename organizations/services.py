@@ -5,7 +5,7 @@ from django.urls import reverse
 
 
 def send_organization_invite_email(*, invite, request):
-    accept_url = request.build_absolute_uri(reverse("accept_invite", kwargs={"token": invite.token}))
+    accept_url = request.build_absolute_uri(reverse("organizations:accept_invite", kwargs={"token": invite.token}))
     context = {
         "invite": invite,
         "organization": invite.organization,
