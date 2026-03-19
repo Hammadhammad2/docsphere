@@ -1,0 +1,13 @@
+{% extends "users/base.html" %}
+
+{% block title %}Edit {{ organization.name }} – Docsphere{% endblock %}
+
+{% block content %}
+<h1>Edit organization</h1>
+<form method="post" action="{% url 'organizations:update_organization' organization.pk %}">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">Save</button>
+</form>
+<p><a href="{% url 'organizations:list_organizations' %}">Back to organizations</a></p>
+{% endblock %}

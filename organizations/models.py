@@ -36,7 +36,7 @@ class UserOrganization(TimeStampedModel):
         return f"{self.user} - {self.organization} ({self.role})"
 
 
-class Invite(TimeStampedModel):
+class OrganizationInvite(TimeStampedModel):
     email = models.EmailField()
     expires_at = models.DateTimeField(default=timezone.now)
     status = models.CharField(max_length=20, choices=InviteStatus.choices, default=InviteStatus.PENDING)

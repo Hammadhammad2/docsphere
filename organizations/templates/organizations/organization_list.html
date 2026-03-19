@@ -1,0 +1,42 @@
+{% extends "users/base.html" %}
+
+{% block title %}Organizations – Docsphere{% endblock %}
+
+{% block content %}
+<h1>My organizations</h1>
+<p><a href="{% url 'organizations:create_organization' %}">Create organization</a></p>
+
+<form method="get" action="">
+	<input type="text" name="q" value="{{ request.GET.q }}" placeholder="Search organizations" />
+	<button type="submit">Search</button>
+</form>
+
+{% if organizations %}
+<ul>
+	{% for org in organizations %}
+	<li>
+		<strong><a href="{% url 'organizations:organization_detail' org.pk %}">{{ org.name }}</a></strong> – {{ org.description|default:"No description" }}
+		<a href="{% url 'organizations:update_organization' org.pk %}">Update</a>
+	</li>
+	{% endfor %}
+</ul>
+
+{% if is_paginated %}
+<nav aria-label="Organization pagination">
+	{% if page_obj.has_previous %}
+	<a href="?q={{ request.GET.q }}&page={{ page_obj.previous_page_number }}">Previous</a>
+	{% endif %}
+	<span>Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+	{% if page_obj.has_next %}
+	<a href="?q={{ request.GET.q }}&page={{ page_obj.next_page_number }}">Next</a>
+	{% endif %}
+</nav>
+{% endif %}
+{% else %}
+	{% if request.GET.q %}
+	<p>No organizations match your search.</p>
+	{% else %}
+	<p>You are not a member of any organization yet.</p>
+	{% endif %}
+{% endif %}
+{% endblock %}
