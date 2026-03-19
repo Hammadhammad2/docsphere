@@ -6,6 +6,16 @@
 		<title>{% block title %}Docsphere{% endblock %}</title>
 	</head>
 	<body>
+		<header>
+			<nav>
+				{% if user.is_authenticated %}
+				<form action="{% url 'logout' %}" method="post">
+					{% csrf_token %}
+					<button type="submit">Log out</button>
+				</form>
+				{% endif %}
+			</nav>
+		</header>
 		<main>
 			{% if messages %}
 			<ul>

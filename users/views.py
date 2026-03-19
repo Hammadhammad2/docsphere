@@ -4,8 +4,7 @@ from django.urls import reverse_lazy
 from django.views import View
 from django.views.generic import FormView
 
-from users.forms.login_form import LoginForm
-from users.forms.register_form import RegisterForm
+from users.forms import LoginForm, RegisterForm
 
 
 class LoginView(FormView):
