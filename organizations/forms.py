@@ -1,42 +1,42 @@
-from django import forms
+from django.forms import EmailField, Form, ModelForm, Textarea, TextInput, ValidationError
 
 from organizations.models import Organization, OrganizationInvite, UserOrganization
 
 
-class CreateOrganizationForm(forms.ModelForm):
+class CreateOrganizationForm(ModelForm):
     class Meta:
         model = Organization
         fields = ["name", "description"]
         widgets = {
-            "name": forms.TextInput(attrs={"placeholder": "Organization name"}),
-            "description": forms.Textarea(attrs={"placeholder": "Optional description", "rows": 3}),
+            "name": TextInput(attrs={"placeholder": "Organization name"}),
+            "description": Textarea(attrs={"placeholder": "Optional description", "rows": 3}),
         }
 
     def clean_name(self):
         name = self.cleaned_data.get("name")
         if name and Organization.objects.filter(name__iexact=name).exists():
-            raise forms.ValidationError("This organization name is already in use.")
+            raise ValidationError("This organization name is already in use.")
         return name
 
 
-class UpdateOrganizationForm(forms.ModelForm):
+class UpdateOrganizationForm(ModelForm):
     class Meta:
         model = Organization
         fields = ["name", "description"]
         widgets = {
-            "name": forms.TextInput(attrs={"placeholder": "Organization name"}),
-            "description": forms.Textarea(attrs={"placeholder": "Optional description", "rows": 3}),
+            "name": TextInput(attrs={"placeholder": "Organization name"}),
+            "description": Textarea(attrs={"placeholder": "Optional description", "rows": 3}),
         }
 
     def clean_name(self):
         name = self.cleaned_data.get("name")
         if name and Organization.objects.filter(name__iexact=name).exclude(pk=self.instance.pk).exists():
-            raise forms.ValidationError("This organization name is already in use.")
+            raise ValidationError("This organization name is already in use.")
         return name
 
 
-class CreateOrganizationInviteForm(forms.Form):
-    email = forms.EmailField(label="Email address")
+class CreateOrganizationInviteForm(Form):
+    email = EmailField(label="Email address")
 
     def __init__(self, *args, **kwargs):
         self.organization = kwargs.pop("organization", None)
@@ -49,12 +49,12 @@ class CreateOrganizationInviteForm(forms.Form):
             email=email,
             organization=self.organization,
         ).exists():
-            raise forms.ValidationError("This email is already invited to this organization.")
+            raise ValidationError("This email is already invited to this organization.")
 
         if UserOrganization.objects.filter(
             user__email=email,
             organization=self.organization,
         ).exists():
-            raise forms.ValidationError("This user is already a member of this organization.")
+            raise ValidationError("This user is already a member of this organization.")
 
         return email
