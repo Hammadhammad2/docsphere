@@ -36,6 +36,7 @@ CUSTOM_APPS = [
     "django_extensions",
     "users",
     "organizations",
+    "projects",
 ]
 
 DEFAULT_APPS = [
