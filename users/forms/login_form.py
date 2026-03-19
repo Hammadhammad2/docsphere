@@ -12,13 +12,11 @@ class LoginForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
+        email = cleaned_data["email"]
+        password = cleaned_data["password"]
 
-        email = cleaned_data.get("email")
-        password = cleaned_data.get("password")
-
-        if email and password:
-            self.user = authenticate(self.request, username=email, password=password)
-            if self.user is None:
-                raise forms.ValidationError("Invalid email or password.")
+        self.user = authenticate(self.request, username=email, password=password)
+        if self.user is None:
+            raise forms.ValidationError("Invalid email or password.")
 
         return cleaned_data
