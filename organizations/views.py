@@ -1,12 +1,19 @@
-from django.conf import settings
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
-from django.urls import reverse_lazy
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from datetime import timedelta
 
-from organizations.choices import Role
-from organizations.forms import CreateOrganizationForm, UpdateOrganizationForm
-from organizations.models import Organization, UserOrganization
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView
+
+from organizations.choices import InviteStatus, Role
+from organizations.forms import CreateOrganizationForm, CreateOrganizationInviteForm, UpdateOrganizationForm
+from organizations.models import INVITE_EXPIRY_DAYS, Organization, OrganizationInvite, UserOrganization
+from organizations.permissions import user_can_manage_org
 
 
 class OrganizationListView(LoginRequiredMixin, ListView):
@@ -68,3 +75,61 @@ class OrganizationDetailView(LoginRequiredMixin, DetailView):
 
     def get_queryset(self):
         return Organization.objects.filter(members=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        organization = self.object
+        context["members"] = (
+            UserOrganization.objects.filter(organization=organization).select_related("user").order_by("user__email")
+        )
+
+        context["pending_invites"] = OrganizationInvite.objects.filter(
+            organization=organization,
+            status=InviteStatus.PENDING,
+            expires_at__gt=timezone.now(),
+        ).order_by("email")
+
+        context["can_invite"] = user_can_manage_org(self.request.user, organization)
+        return context
+
+
+class OrganizationInviteCreateView(LoginRequiredMixin, FormView):
+    form_class = CreateOrganizationInviteForm
+    template_name = "organizations/organization_invite_create.html"
+    login_url = reverse_lazy("login")
+
+    def dispatch(self, request, *args, **kwargs):
+        self.organization = get_object_or_404(
+            Organization.objects.filter(members=request.user),
+            pk=kwargs["pk"],
+        )
+
+        if not user_can_manage_org(request.user, self.organization):
+            raise PermissionDenied
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["organization"] = self.organization
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["organization"] = self.organization
+        return context
+
+    def form_valid(self, form):
+        OrganizationInvite.objects.create(
+            organization=self.organization,
+            email=form.cleaned_data["email"],
+            invited_by=self.request.user,
+            expires_at=timezone.now() + timedelta(days=INVITE_EXPIRY_DAYS),
+            status=InviteStatus.PENDING,
+        )
+
+        messages.success(
+            self.request,
+            f"Invite sent to {form.cleaned_data['email']}.",
+        )
+
+        return redirect("organizations:organization_detail", pk=self.organization.pk)

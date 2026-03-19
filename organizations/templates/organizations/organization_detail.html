@@ -3,10 +3,71 @@
 {% block title %}{{ organization.name }} – Docsphere{% endblock %}
 
 {% block content %}
-<h1>{{ organization.name }}</h1>
-<p>{{ organization.description }}</p>
-<p>
-	<a href="{% url 'organizations:update_organization' organization.pk %}">Update organization</a>
-	| <a href="{% url 'organizations:list_organizations' %}">Back to organizations</a>
-</p>
+<article>
+	<header>
+		<h1>{{ organization.name }}</h1>
+		{% if organization.description %}
+		<p>{{ organization.description }}</p>
+		{% else %}
+		<p><em>No description.</em></p>
+		{% endif %}
+
+		{% if can_invite %}
+		<p>
+			<a href="{% url 'organizations:invite_user' organization.pk %}" role="button">Invite user</a>
+		</p>
+		{% endif %}
+	</header>
+
+	<nav aria-label="Organization actions">
+		<p>
+			{% if can_invite %}
+			<a href="{% url 'organizations:update_organization' organization.pk %}">Update organization</a>
+			|
+			{% endif %}
+			<a href="{% url 'organizations:list_organizations' %}">Back to organizations</a>
+		</p>
+	</nav>
+
+	<section aria-labelledby="members-heading">
+		<h2 id="members-heading">Members</h2>
+		{% if members %}
+		<ul>
+			{% for membership in members %}
+			<li>
+				<strong>{{ membership.user.email }}</strong>
+				{% if membership.role %}
+				<span>— {{ membership.get_role_display|default:membership.role }}</span>
+				{% endif %}
+			</li>
+			{% endfor %}
+		</ul>
+		{% else %}
+		<p>No members listed.</p>
+		{% endif %}
+	</section>
+
+	<section aria-labelledby="invites-heading">
+		<h2 id="invites-heading">Pending invites</h2>
+		{% if pending_invites %}
+		<ul>
+			{% for invite in pending_invites %}
+			<li>
+				<strong>{{ invite.email }}</strong>
+				{% if invite.expires_at %}
+				<span>— expires {{ invite.expires_at }}</span>
+				{% endif %}
+			</li>
+			{% endfor %}
+		</ul>
+		{% else %}
+		<p>No pending invites.</p>
+		{% endif %}
+		{% if can_invite %}
+		<p>
+			<a href="{% url 'organizations:invite_user' organization.pk %}" role="button">Invite user</a>
+		</p>
+		{% endif %}
+	</section>
+</article>
 {% endblock %}
