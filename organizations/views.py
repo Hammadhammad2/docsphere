@@ -16,13 +16,12 @@ class OrganizationListView(LoginRequiredMixin, ListView):
     login_url = reverse_lazy("login")
     paginate_by = settings.PAGINATE_BY
 
-    def get_search_query(self):
-        return self.request.GET.get("q", "").strip()
-
     def get_queryset(self):
-        queryset = Organization.objects.filter(members=self.request.user)
+        search_query = self.request.GET.get("q", "").strip()
 
-        search_query = self.get_search_query()
+        queryset = Organization.objects.filter(
+            members=self.request.user,
+        )
 
         if search_query:
             queryset = queryset.filter(Q(name__icontains=search_query) | Q(description__icontains=search_query))
