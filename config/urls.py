@@ -18,8 +18,15 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import include, path
 
+from organizations.views import OrganizationInviteAcceptLandingView
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("organizations/", include("organizations.urls")),
     path("users/", include("users.urls")),
+    path(
+        "invites/accept/<uuid:token>/",
+        OrganizationInviteAcceptLandingView.as_view(),
+        name="accept_invite",
+    ),
 ]

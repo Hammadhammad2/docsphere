@@ -1,0 +1,10 @@
+Hello,
+
+{{ invited_by.email }} has invited you to join {{ organization.name }} on DocSphere.
+
+Accept your invitation here (link expires on {{ invite.expires_at }}):
+{{ accept_url }}
+
+If you did not expect this email, you can ignore it.
+
+— DocSphere

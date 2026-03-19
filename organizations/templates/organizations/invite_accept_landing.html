@@ -1,0 +1,10 @@
+{% extends "users/base.html" %}
+
+{% block title %}Invitation – {{ organization.name }} – Docsphere{% endblock %}
+
+{% block content %}
+<h1>Organization invitation</h1>
+<p>You were invited to join <strong>{{ organization.name }}</strong> as <strong>{{ invite.email }}</strong>.</p>
+<p><em>Full accept flow (login or register) can be wired here next.</em></p>
+<p><a href="{% url 'login' %}">Log in</a></p>
+{% endblock %}

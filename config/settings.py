@@ -128,3 +128,17 @@ STATIC_URL = "static/"
 
 # Pagination: default page size for list views across the app
 PAGINATE_BY = 10
+
+# Email: console backend only prints to the runserver terminal—it never delivers to a real inbox.
+# For real mail, set EMAIL_BACKEND to SMTP and fill EMAIL_HOST_* (see .env.example).
+DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="DocSphere <noreply@localhost>")
+SERVER_EMAIL = config("SERVER_EMAIL", default=DEFAULT_FROM_EMAIL)
+EMAIL_BACKEND = config(
+    "EMAIL_BACKEND",
+    default="django.core.mail.backends.console.EmailBackend",
+)
+EMAIL_HOST = config("EMAIL_HOST", default="")
+EMAIL_PORT = config("EMAIL_PORT", default=587, cast=int)
+EMAIL_USE_TLS = config("EMAIL_USE_TLS", default=True, cast=bool)
+EMAIL_HOST_USER = config("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD", default="")

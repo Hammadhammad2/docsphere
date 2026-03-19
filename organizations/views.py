@@ -8,12 +8,13 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
-from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView
+from django.views.generic import CreateView, DetailView, FormView, ListView, TemplateView, UpdateView
 
 from organizations.choices import InviteStatus, Role
 from organizations.forms import CreateOrganizationForm, CreateOrganizationInviteForm, UpdateOrganizationForm
 from organizations.models import INVITE_EXPIRY_DAYS, Organization, OrganizationInvite, UserOrganization
 from organizations.permissions import user_can_manage_org
+from organizations.services import send_organization_invite_email
 
 
 class OrganizationListView(LoginRequiredMixin, ListView):
@@ -119,7 +120,7 @@ class OrganizationInviteCreateView(LoginRequiredMixin, FormView):
         return context
 
     def form_valid(self, form):
-        OrganizationInvite.objects.create(
+        invite = OrganizationInvite.objects.create(
             organization=self.organization,
             email=form.cleaned_data["email"],
             invited_by=self.request.user,
@@ -127,9 +128,24 @@ class OrganizationInviteCreateView(LoginRequiredMixin, FormView):
             status=InviteStatus.PENDING,
         )
 
-        messages.success(
-            self.request,
-            f"Invite sent to {form.cleaned_data['email']}.",
-        )
+        if send_organization_invite_email(invite=invite, request=self.request):
+            messages.success(self.request, f"Invite sent to {invite.email}.")
+        else:
+            messages.warning(
+                self.request,
+                f"Invite saved for {invite.email}, but the email could not be sent. "
+                "Check EMAIL_* settings and the server log.",
+            )
 
         return redirect("organizations:organization_detail", pk=self.organization.pk)
+
+
+class OrganizationInviteAcceptLandingView(TemplateView):
+    template_name = "organizations/invite_accept_landing.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        invite = get_object_or_404(OrganizationInvite, token=self.kwargs["token"])
+        context["invite"] = invite
+        context["organization"] = invite.organization
+        return context
