@@ -16,14 +16,18 @@ class OrganizationListView(LoginRequiredMixin, ListView):
     login_url = reverse_lazy("login")
     paginate_by = settings.PAGINATE_BY
 
+    def get_search_query(self):
+        return self.request.GET.get("q", "").strip()
+
     def get_queryset(self):
         queryset = Organization.objects.filter(members=self.request.user)
-        search_query = self.request.GET.get("q", "").strip()
+
+        search_query = self.get_search_query()
 
         if search_query:
             queryset = queryset.filter(Q(name__icontains=search_query) | Q(description__icontains=search_query))
 
-        return queryset.order_by("created")
+        return queryset.order_by("-created")
 
 
 class OrganizationCreateView(LoginRequiredMixin, CreateView):
@@ -52,11 +56,9 @@ class OrganizationUpdateView(LoginRequiredMixin, UpdateView):
     login_url = reverse_lazy("login")
 
     def get_queryset(self):
-        if self.request.user.is_superuser:
-            queryset = Organization.objects.all()
-        else:
-            queryset = Organization.objects.filter(members=self.request.user)
-        return queryset
+        user = self.request.user
+
+        return Organization.objects.filter(Q(members=user) | Q() if user.is_superuser else Q(members=user))
 
 
 class OrganizationDetailView(LoginRequiredMixin, DetailView):
