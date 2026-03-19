@@ -1,6 +1,8 @@
 from django import forms
 from django.contrib.auth import authenticate
 
+from users.models import User
+
 
 class LoginForm(forms.Form):
     email = forms.EmailField()
@@ -22,3 +24,15 @@ class LoginForm(forms.Form):
                 raise forms.ValidationError("Invalid email or password.")
 
         return cleaned_data
+
+
+class RegisterForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ["email", "password"]
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email")
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError("This email is already in use.")
+        return email

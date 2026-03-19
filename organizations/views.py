@@ -5,8 +5,7 @@ from django.urls import reverse_lazy
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from organizations.choices import Role
-from organizations.forms.create_organization_form import CreateOrganizationForm
-from organizations.forms.update_organization_form import UpdateOrganizationForm
+from organizations.forms import CreateOrganizationForm, UpdateOrganizationForm
 from organizations.models import Organization, UserOrganization
 
 
