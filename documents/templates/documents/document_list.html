@@ -1,0 +1,54 @@
+{% extends "users/base.html" %}
+
+{% block title %}Documents – {{ project.name }} – Docsphere{% endblock %}
+
+{% block content %}
+<h1>Documents — {{ project.name }}</h1>
+<p>
+	<a href="{% url 'documents:create_document' project.pk %}">New document</a>
+	|
+	<a href="{% url 'projects:project_detail' project.pk %}">Back to project</a>
+</p>
+
+<form method="get" action="">
+	<input type="search" name="q" value="{{ search_query }}" placeholder="Search by title or body" autocomplete="off" />
+	<button type="submit">Search</button>
+	{% if search_query %}
+	<p><a href="{% url 'documents:list_documents' project.pk %}">Clear search</a></p>
+	{% endif %}
+</form>
+
+{% if documents %}
+<ul>
+	{% for document in documents %}
+	<li>
+		<strong><a href="{% url 'documents:document_detail' project.pk document.pk %}">{{ document.title }}</a></strong>
+		{% if document.author %}
+		<span>— {{ document.author.email }}</span>
+		{% endif %}
+		<a href="{% url 'documents:update_document' project.pk document.pk %}">Edit</a>
+		|
+		<a href="{% url 'documents:delete_document' project.pk document.pk %}">Delete</a>
+	</li>
+	{% endfor %}
+</ul>
+
+{% if is_paginated %}
+<nav aria-label="Document pagination">
+	{% if page_obj.has_previous %}
+	<a href="?q={{ search_query|urlencode }}&page={{ page_obj.previous_page_number }}">Previous</a>
+	{% endif %}
+	<span>Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+	{% if page_obj.has_next %}
+	<a href="?q={{ search_query|urlencode }}&page={{ page_obj.next_page_number }}">Next</a>
+	{% endif %}
+</nav>
+{% endif %}
+{% else %}
+	{% if search_query %}
+	<p>No documents match your search.</p>
+	{% else %}
+	<p>No documents in this project yet.</p>
+	{% endif %}
+{% endif %}
+{% endblock %}

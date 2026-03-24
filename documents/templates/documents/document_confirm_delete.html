@@ -1,0 +1,13 @@
+{% extends "users/base.html" %}
+
+{% block title %}Delete {{ document.title }} – Docsphere{% endblock %}
+
+{% block content %}
+<h1>Delete document</h1>
+<p>Are you sure you want to delete <strong>{{ document.title }}</strong> from {{ project.name }}?</p>
+<form method="post" action="{% url 'documents:delete_document' project.pk document.pk %}">
+	{% csrf_token %}
+	<button type="submit">Delete</button>
+	<a href="{% url 'documents:document_detail' project.pk document.pk %}">Cancel</a>
+</form>
+{% endblock %}
