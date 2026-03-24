@@ -1,0 +1,31 @@
+{% extends "users/base.html" %}
+
+{% block title %}{{ document.title }} – Docsphere{% endblock %}
+
+{% block content %}
+<article>
+	<header>
+		<h1>{{ document.title }}</h1>
+		<p>
+			Project: <a href="{% url 'projects:project_detail' project.pk %}">{{ project.name }}</a>
+			{% if document.author %}
+			— {{ document.author.email }}
+			{% endif %}
+		</p>
+	</header>
+
+	<div>
+		{{ document.body|linebreaks }}
+	</div>
+
+	<nav aria-label="Document actions">
+		<p>
+			<a href="{% url 'documents:update_document' project.pk document.pk %}">Edit</a>
+			|
+			<a href="{% url 'documents:delete_document' project.pk document.pk %}">Delete</a>
+			|
+			<a href="{% url 'documents:list_documents' project.pk %}">All documents in project</a>
+		</p>
+	</nav>
+</article>
+{% endblock %}
