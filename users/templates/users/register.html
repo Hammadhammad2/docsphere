@@ -6,6 +6,7 @@
     <h1>Register</h1>
     <form method="post" action="{% url 'register' %}">
         {% csrf_token %}
+        {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}" />{% endif %}
         {{ form.as_p }}
         <button type="submit">Register</button>
     </form>

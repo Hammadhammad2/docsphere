@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>Organization invitation</title>
+</head>
+<body>
+	<p>Hello,</p>
+	<p><strong>{{ invited_by.email }}</strong> has invited you to join <strong>{{ organization.name }}</strong> on DocSphere.</p>
+	<p><a href="{{ accept_url }}">Accept your invitation</a></p>
+	<p>This link expires on {{ invite.expires_at }}.</p>
+	<p>If you did not expect this email, you can ignore it.</p>
+	<p>— DocSphere</p>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{% extends "users/base.html" %}
+
+{% block title %}
+	{% if organization %}Invitation – {{ organization.name }}{% else %}Invitation{% endif %} – Docsphere
+{% endblock %}
+
+{% block content %}
+{% if error == "invalid" %}
+	<h1>Invalid link</h1>
+	<p>This invitation link is not valid.</p>
+{% elif error == "used_or_expired" %}
+	<h1>Invitation unavailable</h1>
+	<p>This invitation has expired or was already used.</p>
+{% elif wrong_user %}
+	<h1>Wrong account</h1>
+	<p>This invite was sent to <strong>{{ invite.email }}</strong>. Log out, then log in with that address.</p>
+	<p><a href="{% url 'login' %}">Log in</a></p>
+{% elif choose_account %}
+	<h1>Join {{ organization.name }}</h1>
+	<p>This invitation is for <strong>{{ invite.email }}</strong>.</p>
+	<p>
+		<a href="{% url 'register' %}?next={{ request.get_full_path|urlencode }}&email={{ invite.email|urlencode }}">Create account</a>
+		·
+		<a href="{% url 'login' %}?next={{ request.get_full_path|urlencode }}&email={{ invite.email|urlencode }}">I already have an account — log in</a>
+	</p>
+{% endif %}
+{% endblock %}

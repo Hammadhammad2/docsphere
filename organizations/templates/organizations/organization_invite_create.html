@@ -1,0 +1,28 @@
+{% extends "users/base.html" %}
+
+{% comment %}
+Context expected from your view:
+- organization: Organization instance (for title and "Back" link)
+- form: Django Form with an "email" field (e.g. InviteUserForm)
+{% endcomment %}
+
+{% block title %}Invite user – {{ organization.name }} – Docsphere{% endblock %}
+
+{% block content %}
+<article>
+	<header>
+		<h1>Invite user</h1>
+		<p>Send an invitation to join <strong>{{ organization.name }}</strong>.</p>
+	</header>
+
+	<p><a href="{% url 'organizations:organization_detail' organization.pk %}">Back to organization</a></p>
+
+	<form method="post" action="" novalidate>
+		{% csrf_token %}
+		{{ form.as_p }}
+		<p>
+			<button type="submit">Send invite</button>
+		</p>
+	</form>
+</article>
+{% endblock %}

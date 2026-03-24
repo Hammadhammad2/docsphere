@@ -1,12 +1,22 @@
-from django.conf import settings
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.db.models import Q
-from django.urls import reverse_lazy
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from datetime import timedelta
+from uuid import UUID
 
-from organizations.choices import Role
-from organizations.forms import CreateOrganizationForm, UpdateOrganizationForm
-from organizations.models import Organization, UserOrganization
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.core.exceptions import PermissionDenied
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse_lazy
+from django.utils import timezone
+from django.views import View
+from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView
+
+from organizations.choices import InviteStatus, Role
+from organizations.forms import CreateOrganizationForm, CreateOrganizationInviteForm, UpdateOrganizationForm
+from organizations.models import INVITE_EXPIRY_DAYS, Organization, OrganizationInvite, UserOrganization
+from organizations.permissions import user_can_manage_org
+from organizations.services import send_organization_invite_email
 
 
 class OrganizationListView(LoginRequiredMixin, ListView):
@@ -68,3 +78,112 @@ class OrganizationDetailView(LoginRequiredMixin, DetailView):
 
     def get_queryset(self):
         return Organization.objects.filter(members=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        organization = self.object
+        context["members"] = (
+            UserOrganization.objects.filter(organization=organization).select_related("user").order_by("user__email")
+        )
+
+        context["pending_invites"] = OrganizationInvite.objects.filter(
+            organization=organization,
+            status=InviteStatus.PENDING,
+            expires_at__gt=timezone.now(),
+        ).order_by("email")
+
+        context["can_invite"] = user_can_manage_org(self.request.user, organization)
+        return context
+
+
+class OrganizationInviteCreateView(LoginRequiredMixin, FormView):
+    form_class = CreateOrganizationInviteForm
+    template_name = "organizations/organization_invite_create.html"
+    login_url = reverse_lazy("login")
+
+    def dispatch(self, request, *args, **kwargs):
+        self.organization = get_object_or_404(
+            Organization.objects.filter(members=request.user),
+            pk=kwargs["pk"],
+        )
+
+        if not user_can_manage_org(request.user, self.organization):
+            raise PermissionDenied("You are not allowed to invite users to this organization.")
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["organization"] = self.organization
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["organization"] = self.organization
+        return context
+
+    def form_valid(self, form):
+        invite = OrganizationInvite.objects.create(
+            organization=self.organization,
+            email=form.cleaned_data["email"],
+            invited_by=self.request.user,
+            expires_at=timezone.now() + timedelta(days=INVITE_EXPIRY_DAYS),
+            status=InviteStatus.PENDING,
+        )
+
+        if send_organization_invite_email(invite=invite, request=self.request):
+            messages.success(self.request, f"Invite sent to {invite.email}.")
+        else:
+            messages.warning(
+                self.request,
+                f"Invite saved for {invite.email}, but the email could not be sent. "
+                "Check EMAIL_* settings and the server log.",
+            )
+
+        return redirect("organizations:organization_detail", pk=self.organization.pk)
+
+
+class OrganizationInviteAcceptView(View):
+    def get(self, request, *args, **kwargs):
+        raw = (kwargs.get("token") or "").replace("%3D", "").replace("=", "")
+        try:
+            token = UUID(raw)
+        except ValueError:
+            return render(request, "organizations/invite_accept_landing.html", {"error": "invalid"}, status=404)
+
+        invite = OrganizationInvite.objects.filter(token=token).first()
+        if invite is None:
+            return render(request, "organizations/invite_accept_landing.html", {"error": "invalid"}, status=404)
+
+        if invite.status != InviteStatus.PENDING or invite.expires_at <= timezone.now():
+            return render(
+                request,
+                "organizations/invite_accept_landing.html",
+                {"invite": invite, "organization": invite.organization, "error": "used_or_expired"},
+            )
+
+        if request.user.is_authenticated:
+            if request.user.email.lower() != invite.email.lower():
+                return render(
+                    request,
+                    "organizations/invite_accept_landing.html",
+                    {"invite": invite, "organization": invite.organization, "wrong_user": True},
+                )
+            UserOrganization.objects.get_or_create(
+                organization=invite.organization,
+                user=request.user,
+                defaults={"role": Role.MEMBER},
+            )
+            invite.status = InviteStatus.ACCEPTED
+            invite.save(update_fields=["status", "modified"])
+            messages.success(request, f"You joined {invite.organization.name}.")
+            return redirect("organizations:organization_detail", pk=invite.organization_id)
+
+        return render(
+            request,
+            "organizations/invite_accept_landing.html",
+            {
+                "invite": invite,
+                "organization": invite.organization,
+                "choose_account": True,
+            },
+        )
