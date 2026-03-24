@@ -4,7 +4,7 @@ from django.template.loader import render_to_string
 from django.urls import reverse
 
 
-def send_organization_invite_email(*, invite, request):
+def send_organization_invite_email(invite, request):
     accept_url = request.build_absolute_uri(reverse("organizations:accept_invite", kwargs={"token": invite.token}))
     context = {
         "invite": invite,
@@ -16,7 +16,7 @@ def send_organization_invite_email(*, invite, request):
     message = EmailMultiAlternatives(
         subject=render_to_string("organizations/email/invite_user_subject.txt", context).strip(),
         body=render_to_string("organizations/email/invite_user.txt", context),
-        from_email=settings.DEFAULT_FROM_EMAIL or "DocSphere <noreply@localhost>",
+        from_email=settings.DEFAULT_FROM_EMAIL,
         to=[invite.email],
     )
 

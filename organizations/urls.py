@@ -3,7 +3,7 @@ from django.urls import path
 from organizations.views import (
     OrganizationCreateView,
     OrganizationDetailView,
-    OrganizationInviteAcceptLandingView,
+    OrganizationInviteAcceptView,
     OrganizationInviteCreateView,
     OrganizationListView,
     OrganizationUpdateView,
@@ -15,7 +15,7 @@ urlpatterns = [
     path("", OrganizationListView.as_view(), name="list_organizations"),
     path(
         "invites/accept/<str:token>/",
-        OrganizationInviteAcceptLandingView.as_view(),
+        OrganizationInviteAcceptView.as_view(),
         name="accept_invite",
     ),
     path("<int:pk>/", OrganizationDetailView.as_view(), name="organization_detail"),

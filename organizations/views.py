@@ -108,7 +108,7 @@ class OrganizationInviteCreateView(LoginRequiredMixin, FormView):
         )
 
         if not user_can_manage_org(request.user, self.organization):
-            raise PermissionDenied
+            raise PermissionDenied("You are not allowed to invite users to this organization.")
         return super().dispatch(request, *args, **kwargs)
 
     def get_form_kwargs(self):
@@ -142,7 +142,7 @@ class OrganizationInviteCreateView(LoginRequiredMixin, FormView):
         return redirect("organizations:organization_detail", pk=self.organization.pk)
 
 
-class OrganizationInviteAcceptLandingView(View):
+class OrganizationInviteAcceptView(View):
     def get(self, request, *args, **kwargs):
         raw = (kwargs.get("token") or "").replace("%3D", "").replace("=", "")
         try:
