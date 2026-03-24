@@ -1,0 +1,48 @@
+{% extends "users/base.html" %}
+
+{% block title %}Projects – Docsphere{% endblock %}
+
+{% block content %}
+<h1>Projects</h1>
+<p>To create a project, open an <a href="{% url 'organizations:list_organizations' %}">organization</a> you belong to and use <strong>Create project</strong> there.</p>
+
+<form method="get" action="">
+	<input type="search" name="q" value="{{ search_query }}" placeholder="Search by name or description" autocomplete="off" />
+	<button type="submit">Search</button>
+	{% if search_query %}
+	<p><a href="{% url 'projects:list_projects' %}">Clear search</a></p>
+	{% endif %}
+</form>
+
+{% if projects %}
+<ul>
+	{% for project in projects %}
+	<li>
+		<strong><a href="{% url 'projects:project_detail' project.pk %}">{{ project.name }}</a></strong>
+		{% if project.description %}
+		— {{ project.description|truncatewords:20 }}
+		{% endif %}
+		<a href="{% url 'projects:update_project' project.pk %}">Update</a>
+	</li>
+	{% endfor %}
+</ul>
+
+{% if is_paginated %}
+<nav aria-label="Project pagination">
+	{% if page_obj.has_previous %}
+	<a href="?q={{ search_query|urlencode }}&page={{ page_obj.previous_page_number }}">Previous</a>
+	{% endif %}
+	<span>Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+	{% if page_obj.has_next %}
+	<a href="?q={{ search_query|urlencode }}&page={{ page_obj.next_page_number }}">Next</a>
+	{% endif %}
+</nav>
+{% endif %}
+{% else %}
+	{% if search_query %}
+	<p>No projects match your search.</p>
+	{% else %}
+	<p>No projects yet.</p>
+	{% endif %}
+{% endif %}
+{% endblock %}

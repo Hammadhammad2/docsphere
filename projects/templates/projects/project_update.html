@@ -1,0 +1,17 @@
+{% extends "users/base.html" %}
+
+{% block title %}Update {{ project.name }} – Docsphere{% endblock %}
+
+{% block content %}
+<h1>Update project</h1>
+<form method="post" action="{% url 'projects:update_project' project.pk %}">
+	{% csrf_token %}
+	{{ form.as_p }}
+	<button type="submit">Save</button>
+</form>
+<p>
+	<a href="{% url 'projects:project_detail' project.pk %}">Cancel</a>
+	|
+	<a href="{% url 'projects:list_projects' %}">All projects</a>
+</p>
+{% endblock %}

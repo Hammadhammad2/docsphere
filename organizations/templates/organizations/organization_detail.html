@@ -21,6 +21,8 @@
 
 	<nav aria-label="Organization actions">
 		<p>
+			<a href="{% url 'projects:create_project' organization.pk %}">Create project</a>
+			|
 			{% if can_invite %}
 			<a href="{% url 'organizations:update_organization' organization.pk %}">Update organization</a>
 			|

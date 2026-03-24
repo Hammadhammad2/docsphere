@@ -1,0 +1,24 @@
+{% extends "users/base.html" %}
+
+{% block title %}{{ project.name }} – Docsphere{% endblock %}
+
+{% block content %}
+<article>
+	<header>
+		<h1>{{ project.name }}</h1>
+		{% if project.description %}
+		<p>{{ project.description }}</p>
+		{% else %}
+		<p><em>No description.</em></p>
+		{% endif %}
+	</header>
+
+	<nav aria-label="Project actions">
+		<p>
+			<a href="{% url 'projects:update_project' project.pk %}">Update project</a>
+			|
+			<a href="{% url 'projects:list_projects' %}">Back to projects</a>
+		</p>
+	</nav>
+</article>
+{% endblock %}
